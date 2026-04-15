@@ -64,16 +64,19 @@ MeshDetector = None
 MouthAnalyzer = None
 MouthWorker = None
 SpeakingAnalyzer = None
+AudioVAD = None
 
 try:
     from ..speaking.mesh_detector import MeshDetector as _MeshDetector
     from ..speaking.mouth_analyzer import MouthAnalyzer as _MouthAnalyzer
     from ..speaking.mouth_worker import MouthWorker as _MouthWorker
     from ..speaking.speaking_analyzer import SpeakingAnalyzer as _SpeakingAnalyzer
+    from ..speaking.audio_vad import AudioVAD as _AudioVAD
     MeshDetector = _MeshDetector
     MouthAnalyzer = _MouthAnalyzer
     MouthWorker = _MouthWorker
     SpeakingAnalyzer = _SpeakingAnalyzer
+    AudioVAD = _AudioVAD
     SPEAKING_AVAILABLE = True
 except ImportError as e:
     logger.warning(f"[Warning] Speaking module unavailable (mediapipe not installed): {e}")
@@ -203,6 +206,7 @@ class PipelineState:
         self.speaking_enabled: bool = False
         self.mouth_worker: Optional[MouthWorker] = None
         self.mouth_states: Dict[int, str] = {}
+        self.audio_vad: Optional["AudioVAD"] = None
         self._last_frame = None
         self.show_hud: bool = True
 
@@ -1070,6 +1074,13 @@ def _generate_frames():
                                 state.mouth_worker.submit(strack.track_id, crop.copy(), ft.timestamp_ms)
                     state.mouth_states = state.mouth_worker.get_results()
 
+                    # AudioVAD override: if environment is silent, force all to not_speaking
+                    if state.audio_vad is not None and not state.audio_vad.has_voice():
+                        state.mouth_states = {
+                            tid: "not_speaking" if st == "speaking" else st
+                            for tid, st in state.mouth_states.items()
+                        }
+
                 det_faces = state.num_faces
 
                 # Read identity worker snapshot (atomic reference read, lock-free)
@@ -1506,10 +1517,21 @@ def api_start():
             except Exception as e:
                 logger.error(f"[Speaking] init failed: {e}")
                 state.mouth_worker = None
+
+            # Start AudioVAD for ambient voice detection
+            if AudioVAD is not None:
+                try:
+                    vad = AudioVAD()
+                    vad.start()
+                    state.audio_vad = vad
+                except Exception as e:
+                    logger.warning(f"[AudioVAD] init failed (will not affect visual detection): {e}")
+                    state.audio_vad = None
         else:
             if speaking_enabled and not SPEAKING_AVAILABLE:
                 warnings.append("Speaking module unavailable (mediapipe not installed)")
             state.mouth_worker = None
+            state.audio_vad = None
 
         result = {
             "ok": True,
@@ -1545,6 +1567,10 @@ def _stop_pipeline():
     if state.mouth_worker is not None:
         state.mouth_worker.stop()
         state.mouth_worker = None
+
+    if state.audio_vad is not None:
+        state.audio_vad.stop()
+        state.audio_vad = None
 
     time.sleep(0.1)
 

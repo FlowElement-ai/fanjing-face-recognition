@@ -41,6 +41,7 @@ mkdir -p models/speaking
 python scripts/download_model.py
 python scripts/download_arcface.py
 python scripts/download_bisenet.py --convert
+python scripts/download_silero_vad.py
 curl -L -o models/face_landmarker.task \
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 
@@ -86,6 +87,7 @@ Model files are large and not included in the repository. Please place the follo
 | ArcFace w600k_r50 | Face Embedding | ~174MB | `models/w600k_r50.onnx` |
 | MediaPipe FaceLandmarker | Keypoint Detection | ~4MB | `models/face_landmarker.task` |
 | BiSeNet ResNet18 | Face Parsing | ~53MB | `models/speaking/resnet18.onnx` |
+| Silero VAD | Voice Activity Detection | ~1.2MB | `models/speaking/silero_vad_half.onnx` |
 
 ### Using Download Scripts
 
@@ -98,6 +100,9 @@ python scripts/download_arcface.py
 
 # Download BiSeNet face parsing model (required for speaking detection)
 python scripts/download_bisenet.py
+
+# Download Silero VAD model (for ambient voice detection)
+python scripts/download_silero_vad.py
 
 # Download MediaPipe FaceLandmarker
 curl -L -o models/face_landmarker.task \

@@ -227,13 +227,45 @@ Typical scenario: 3 consecutive good frames → credit 3.0 reaches threshold; wa
 
 ### 9.1 Architecture
 
-Runs in separate **MouthWorker async thread**, doesn't affect main thread FPS:
+Runs in separate async threads, doesn't affect main thread FPS:
 
 ```
-face_crop → MediaPipe (blendshapes + yaw) → BiSeNet (occlusion) → XGBoost (speaking) → Hysteresis (debounce)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ MouthWorker Thread (Visual Detection):                                       │
+│   face_crop → MediaPipe (blendshapes + yaw) → BiSeNet (occlusion)            │
+│            → XGBoost (speaking) → Hysteresis (debounce)                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ AudioVAD Thread (Ambient Voice Detection):                                   │
+│   microphone → Silero VAD (ONNX) → has_voice (True/False)                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Result Merge:                                                                │
+│   if has_voice == False:                                                     │
+│       override all "speaking" → "not_speaking" (environment is silent)       │
+│   else:                                                                      │
+│       use visual detection results as-is                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 9.2 Three-Layer Judgment
+### 9.2 AudioVAD (Ambient Voice Activity Detection)
+
+**Purpose**: Prevent false positive speaking detections when environment is silent.
+
+When the visual model detects mouth movement (e.g., chewing, yawning), but no voice is present in the environment, AudioVAD overrides the result to "not_speaking".
+
+**Technical Details:**
+- **Model**: Silero VAD half-precision ONNX (~1.2MB)
+- **Input**: 512 samples at 16kHz (32ms per frame) from system default microphone
+- **Output**: Speech probability 0.0~1.0 per frame
+- **Threshold**: 0.3 (any of last 6 frames > 0.3 → has_voice = True)
+- **Fallback**: If microphone unavailable, VAD silently degrades and doesn't interfere with visual detection
+
+### 9.3 Visual Three-Layer Judgment
 
 **L1 Occlusion Judgment:**
 - |yaw| > 60° → `SELF_OCCLUDED` (extreme side face)
