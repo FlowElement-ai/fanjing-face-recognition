@@ -35,10 +35,14 @@ training = [
     "keyboard>=0.13.0",
 ]
 
+[project.scripts]
+fanjing-face = "src.cli:main"
+
 [project.urls]
-Homepage = "https://github.com/FlowElement/fanjing-face-recognition"
-Repository = "https://github.com/FlowElement/fanjing-face-recognition"
-Issues = "https://github.com/FlowElement/fanjing-face-recognition/issues"
+Homepage = "https://github.com/FlowElement-ai/fanjing-face-recognition"
+Repository = "https://github.com/FlowElement-ai/fanjing-face-recognition"
+Documentation = "https://github.com/FlowElement-ai/fanjing-face-recognition#readme"
+Issues = "https://github.com/FlowElement-ai/fanjing-face-recognition/issues"
 
 [build-system]
 requires = ["hatchling"]

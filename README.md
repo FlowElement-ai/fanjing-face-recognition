@@ -4,28 +4,51 @@
 
 支持多人跟踪、自动注册、跨 session 身份持久化、可选说话检测。可独立使用，也可作为 [M-Flow](https://github.com/FlowElement/m_flow) Playground 的视觉感知服务。
 
-## 快速启动
+## 安装
+
+### 方式一：PyPI 安装（推荐）
 
 ```bash
-# 1. 创建并激活虚拟环境
+# 安装
+pip install fanjing-face-recognition
+
+# 下载模型
+fanjing-face download-models
+
+# 启动服务
+fanjing-face
+```
+
+### 方式二：从源码安装
+
+```bash
+# 克隆仓库
+git clone https://github.com/FlowElement-ai/fanjing-face-recognition.git
+cd fanjing-face-recognition
+
+# 创建虚拟环境
 python -m venv .venv
+source .venv/bin/activate  # Windows: .\.venv\Scripts\activate
 
-# macOS / Linux
-source .venv/bin/activate
-
-# Windows
-.\.venv\Scripts\activate
-
-# 2. 安装依赖
+# 安装依赖
 pip install -r requirements.txt
 
-# 3. 下载模型文件（见下方"模型下载"章节）
+# 下载模型文件（见下方"模型下载"章节）
 
-# 4. 启动 Web 服务
+# 启动服务
 python run_web_v2.py
 
-# 5. 浏览器自动打开 http://localhost:5001
-#    启动时控制台会打印 API Key，前端页面自动注入无需手动配置
+# 浏览器自动打开 http://localhost:5001
+```
+
+### CLI 命令
+
+```bash
+fanjing-face                      # 启动服务 (默认 localhost:5001)
+fanjing-face --host 0.0.0.0       # 监听所有网络接口
+fanjing-face --port 8080          # 指定端口
+fanjing-face --no-browser         # 不自动打开浏览器
+fanjing-face download-models      # 下载所有模型
 ```
 
 ## Docker 部署
