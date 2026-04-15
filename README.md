@@ -39,6 +39,23 @@ python run_web_v2.py
 | MediaPipe FaceLandmarker | 关键点检测 | ~4MB | `models/face_landmarker.task` |
 | BiSeNet ResNet18 | 面部分割 | ~53MB | `models/speaking/resnet18.onnx` |
 
+### 使用下载脚本
+
+```bash
+# 下载 SCRFD 检测模型
+python scripts/download_model.py
+
+# 下载 ArcFace 嵌入模型
+python scripts/download_arcface.py
+
+# 下载 BiSeNet 面部分割模型 (说话检测需要)
+python scripts/download_bisenet.py
+
+# 下载 MediaPipe FaceLandmarker
+curl -L -o models/face_landmarker.task \
+  "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
+```
+
 说话检测模型 (`models/speaking/speaking_model.json` + `speaking_meta.json`) 可通过训练生成，详见"说话检测训练"章节。
 
 ## 项目结构
